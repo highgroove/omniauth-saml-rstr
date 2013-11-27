@@ -26,6 +26,10 @@ module OmniAuth
           validate(soft = false)
         end
 
+        def response_params
+          @security_token_content.attribute_statement
+        end
+
         # The value of the user identifier as designated by the initialization request response
         def name_id
           @security_token_content.name_identifier

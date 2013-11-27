@@ -61,6 +61,10 @@ module OmniAuth
             @xml.at_xpath("//ds:SignedInfo", {"ds" => DSIG})
           end
 
+          def attribute_statement
+            @xml_unnamespaced.css('AttributeStatement').css('Attribute').map.each {|a| {name: a.attribute('AttributeName').text, value: a.css('AttributeValue').text}}
+          end
+
           def name_identifier
             @xml_unnamespaced.css("NameIdentifier").text
           end
@@ -90,8 +94,9 @@ module OmniAuth
             certificate = OpenSSL::X509::Certificate.new(cert_text)
             fingerprint = Digest::SHA1.hexdigest(certificate.to_der)
 
-            if fingerprint != idp_cert_fingerprint.gsub(/[^a-zA-Z0-9]/,"").downcase
-              raise OmniAuth::Strategies::SAML_RSTR::ValidationError.new("Fingerprint validation error")
+            config_fingerprint = idp_cert_fingerprint.gsub(/[^a-zA-Z0-9]/,"").downcase
+            if fingerprint != config_fingerprint
+              raise OmniAuth::Strategies::SAML_RSTR::ValidationError.new("Fingerprint validation error\n expected:\t#{config_fingerprint}\n actual:\t#{fingerprint} ")
             end
 
             canon_string =  info_element.canonicalize(Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0)
